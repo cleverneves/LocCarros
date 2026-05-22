@@ -8,12 +8,10 @@ class AuthController extends Controller
 {
     public function login(Request $request)
     {
-        // dd($request->all());
-
-        // Fazer autenticação
-        $credenciais =  $request->all(['email', 'password']);
+        $credenciais = $request->only('email', 'password');
 
         $token = auth('api')->attempt($credenciais);
+
         if (!$token) {
             return response()->json(['error' => 'Usuário ou senha inválida.'], 403);
         }
@@ -37,7 +35,6 @@ class AuthController extends Controller
 
     public function me()
     {
-        // dd(auth()->user());
         return response()->json(auth()->user());
     }
 }

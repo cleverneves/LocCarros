@@ -2,122 +2,68 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Locacao;
 use Illuminate\Http\Request;
 use App\Repositories\LocacaoRepository;
 
 class LocacaoController extends Controller
 {
-    public function __construct(Locacao $locacao)
+    public function __construct(private LocacaoRepository $repository)
     {
-        $this->locacao = $locacao;
     }
 
-    /**
-     * @return \Illuminate\Http\Response
-     */
     public function index(Request $request)
     {
-        $locacaoRepository = new LocacaoRepository($this->locacao);
-
-        // if ($request->has('atributos_modelo')) {
-        //     $atributos_modelo = 'modelo:id, '.$request->atributos_modelo;
-        //     $locacaoRepository->selectAtributosRegistrosRelacionados($atributos_modelo);
-        // } else {
-        //     $locacaoRepository->selectAtributosRegistrosRelacionados('modelo');
-        // }
-
         if ($request->has('filtro')) {
-            $locacaoRepository->filtro($request->filtro);
+            $this->repository->filtro($request->filtro);
         }
 
         if ($request->has('atributos')) {
-            $locacaoRepository->selectAtributos($request->atributos);
+            $this->repository->selectAtributos($request->atributos);
         }
 
-        return response()->json($locacaoRepository->getResultado(), 200);
+        return response()->json($this->repository->getResultado(), 200);
     }
 
-    /**
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * @return \Illuminate\Http\Response
-     */
     public function store(Request $request)
     {
-        $request->validate($this->locacao->rules());
+        $locacao = $this->repository->getModel();
 
-        // $locacao = $this->locacao->create($request->all());
-        $locacao = $this->locacao->create([
-            'cliente_id' => $request->cliente_id,
-            'carro_id' => $request->carro_id,
-            'data_inicio_periodo' => $request->data_inicio_periodo,
-            'data_final_periodo' => $request->data_final_periodo,
+        $this->validarRequisicao($request, $locacao->rules());
+
+        $locacao = $locacao->create([
+            'cliente_id'                  => $request->cliente_id,
+            'carro_id'                    => $request->carro_id,
+            'data_inicio_periodo'         => $request->data_inicio_periodo,
             'data_final_previsto_periodo' => $request->data_final_previsto_periodo,
-            'valor_diaria' => $request->valor_diaria,
-            'km_inicial' => $request->km_inicial,
-            'km_final' => $request->km_final,
+            'data_final_realizado_periodo'=> $request->data_final_realizado_periodo,
+            'valor_diaria'                => $request->valor_diaria,
+            'km_inicial'                  => $request->km_inicial,
+            'km_final'                    => $request->km_final,
         ]);
 
         return response()->json($locacao, 201);
     }
 
-     /**
-     * @return \Illuminate\Http\Response
-     */
     public function show(int $id)
     {
-        if(is_null($this->locacao->find($id))) {
-            return response()->json(['erro' => 'Locação não encontrada.'], 404) ;
-        }
+        $locacao = $this->repository->getModel()->find($id);
 
-        $locacao = $this->locacao->find($id);
+        if (is_null($locacao)) {
+            return response()->json(['erro' => 'Locação não encontrada.'], 404);
+        }
 
         return response()->json($locacao, 200);
     }
 
-    /**
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Locacao $locacao)
-    {
-        //
-    }
-
-    /**
-     * @return \Illuminate\Http\Response
-     */
     public function update(Request $request, int $id)
     {
-        if(is_null($this->locacao->find($id))) {
+        $locacao = $this->repository->getModel()->find($id);
+
+        if (is_null($locacao)) {
             return response()->json(['erro' => 'Não foi possível atualizar. A locação solicitada é inexistente.'], 404);
         }
 
-        $locacao = $this->locacao->find($id);
-
-        if($request->method() === 'PATCH') {
-
-            $regrasDinamicas = [];
-
-            //percorrendo todas as regras definidas no Model
-            foreach($locacao->rules() as $input => $regra) {
-                //coletar apenas as regras aplicáveis aos parâmetros parciais da requisição PATCH
-                if(array_key_exists($input, $request->all())) {
-                    $regrasDinamicas[$input] = $regra;
-                }
-            }
-
-            $request->validate($regrasDinamicas);
-
-        } else {
-            $request->validate($locacao->rules());
-        }
+        $this->validarRequisicao($request, $locacao->rules());
 
         $locacao->fill($request->all());
         $locacao->save();
@@ -125,19 +71,16 @@ class LocacaoController extends Controller
         return response()->json($locacao, 200);
     }
 
-
-    /**
-     * @return \Illuminate\Http\Response
-     */
     public function destroy(int $id)
     {
-        if(is_null($this->locacao->find($id))) {
+        $locacao = $this->repository->getModel()->find($id);
+
+        if (is_null($locacao)) {
             return response()->json(['erro' => 'Falha ao excluir. A locação solicitada é inexistente.'], 404);
         }
 
-        $locacao = $this->locacao->find($id);
         $locacao->delete();
 
-        return response()->json(['msg' => 'A locacao foi removida com sucesso!'], 200);
+        return response()->json(['msg' => 'A locação foi removida com sucesso!'], 200);
     }
 }

@@ -11,18 +11,14 @@ class Carro extends Model
 
     protected $fillable = ['modelo_id', 'placa', 'disponivel', 'km'];
 
-    public function rules() {
-        return [
-            'modelo_id' => 'exists:modelos,id',
-            'placa' => 'required',
-            'disponivel' => 'required',
-            'km' => 'required', //(1,2,3,4,5)
-        ];
-    }
-
-    public function feedback()
+    public function rules(): array
     {
-        return [];
+        return [
+            'modelo_id' => 'required|exists:modelos,id',
+            'placa'     => 'required|string|max:10',
+            'disponivel'=> 'required|boolean',
+            'km'        => 'required|integer|min:0',
+        ];
     }
 
     public function modelo()

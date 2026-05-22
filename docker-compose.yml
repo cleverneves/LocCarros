@@ -1,10 +1,10 @@
 services:
     app:
-        container_name: loccarros-app
+        container_name: vayro-app
         build:
             context: .
             dockerfile: Dockerfile
-        image: loccarros/laravel-app
+        image: vayro/laravel-app
         restart: unless-stopped
         working_dir: /var/www/
         volumes:
@@ -15,10 +15,10 @@ services:
             redis:
                 condition: service_started
         networks:
-            - loccarros
+            - vayro
 
     nginx:
-        container_name: loccarros-nginx
+        container_name: vayro-nginx
         image: nginx:alpine
         restart: unless-stopped
         ports:
@@ -29,33 +29,33 @@ services:
         depends_on:
             - app
         networks:
-            - loccarros
+            - vayro
 
     # postgresql
     pgsql:
-        container_name: loccarros-pgsql
+        container_name: vayro-pgsql
         image: postgres:16-alpine
         restart: unless-stopped
         environment:
-            POSTGRES_DB: ${DB_DATABASE:-loccarros}
-            POSTGRES_USER: ${DB_USERNAME:-loccarros}
+            POSTGRES_DB: ${DB_DATABASE:-vayro}
+            POSTGRES_USER: ${DB_USERNAME:-vayro}
             POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
         volumes:
             - ./.docker/pgsql/dbdata:/var/lib/postgresql/data
         ports:
             - "5432:5432"
         healthcheck:
-            test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-loccarros} -d ${DB_DATABASE:-loccarros}" ]
+            test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-vayro} -d ${DB_DATABASE:-vayro}" ]
             interval: 10s
             timeout: 5s
             retries: 5
         networks:
-            - loccarros
+            - vayro
 
     # queue
     queue:
-        container_name: loccarros-queue
-        image: loccarros/laravel-app
+        container_name: vayro-queue
+        image: vayro/laravel-app
         restart: unless-stopped
         command: "php artisan queue:work"
         volumes:
@@ -64,16 +64,16 @@ services:
             - redis
             - app
         networks:
-            - loccarros
+            - vayro
 
     # redis
     redis:
-        container_name: loccarros-redis
+        container_name: vayro-redis
         image: redis:alpine
         restart: unless-stopped
         networks:
-            - loccarros
+            - vayro
 
 networks:
-    loccarros:
+    vayro:
         driver: bridge

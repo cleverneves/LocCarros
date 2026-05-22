@@ -17,8 +17,4 @@ class Cliente extends Model
         ];
     }
 
-    public function feedback()
-    {
-        return [];
-    }
 }
