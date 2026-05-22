@@ -1,25 +1,24 @@
-version: "3.7"
-
 services:
-    # image project
     app:
-        container_name: especializati-laravel-9
+        container_name: loccarros-app
         build:
             context: .
             dockerfile: Dockerfile
-        image: especializati/laravel9-app
+        image: loccarros/laravel-app
         restart: unless-stopped
         working_dir: /var/www/
         volumes:
             - ./:/var/www
         depends_on:
-            - redis
+            pgsql:
+                condition: service_healthy
+            redis:
+                condition: service_started
         networks:
-            - laravel-9
+            - loccarros
 
-    # nginx
     nginx:
-        container_name: especializati-nginx
+        container_name: loccarros-nginx
         image: nginx:alpine
         restart: unless-stopped
         ports:
@@ -27,30 +26,36 @@ services:
         volumes:
             - ./:/var/www
             - ./docker/nginx/:/etc/nginx/conf.d/
+        depends_on:
+            - app
         networks:
-            - laravel-9
+            - loccarros
 
-    # db mysql
-    mysql:
-        container_name: especializati-mysql
-        image: mysql:5.7.22
+    # postgresql
+    pgsql:
+        container_name: loccarros-pgsql
+        image: postgres:16-alpine
         restart: unless-stopped
         environment:
-            MYSQL_DATABASE: ${DB_DATABASE}
-            MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-            MYSQL_PASSWORD: ${DB_PASSWORD}
-            MYSQL_USER: ${DB_USERNAME}
+            POSTGRES_DB: ${DB_DATABASE:-loccarros}
+            POSTGRES_USER: ${DB_USERNAME:-loccarros}
+            POSTGRES_PASSWORD: ${DB_PASSWORD:-secret}
         volumes:
-            - ./.docker/mysql/dbdata:/var/lib/mysql
+            - ./.docker/pgsql/dbdata:/var/lib/postgresql/data
         ports:
-            - "3388:3306"
+            - "5432:5432"
+        healthcheck:
+            test: [ "CMD-SHELL", "pg_isready -U ${DB_USERNAME:-loccarros} -d ${DB_DATABASE:-loccarros}" ]
+            interval: 10s
+            timeout: 5s
+            retries: 5
         networks:
-            - laravel-9
+            - loccarros
 
     # queue
     queue:
-        container_name: especializati-queue
-        image: especializati/laravel9-app
+        container_name: loccarros-queue
+        image: loccarros/laravel-app
         restart: unless-stopped
         command: "php artisan queue:work"
         volumes:
@@ -59,15 +64,16 @@ services:
             - redis
             - app
         networks:
-            - laravel-9
+            - loccarros
 
     # redis
     redis:
-        container_name: especializati-redis
-        image: redis:latest
+        container_name: loccarros-redis
+        image: redis:alpine
+        restart: unless-stopped
         networks:
-            - laravel-9
+            - loccarros
 
 networks:
-    laravel-9:
+    loccarros:
         driver: bridge
