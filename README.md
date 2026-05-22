@@ -76,12 +76,12 @@ Authorization: Bearer {token}
 
 ### Endpoints de autenticação
 
-| Método | Rota | Descrição |
-|--------|------|-----------|
-| `POST` | `/api/login` | Obtém o token JWT |
-| `POST` | `/api/v1/me` | Retorna o usuário autenticado |
-| `POST` | `/api/v1/refresh` | Renova o token |
-| `POST` | `/api/v1/logout` | Invalida o token |
+| Método | Rota | Autenticação | Descrição |
+|--------|------|--------------|-----------|
+| `POST` | `/api/v1/login` | Não | Obtém o token JWT |
+| `POST` | `/api/v1/me` | Sim | Retorna o usuário autenticado |
+| `POST` | `/api/v1/refresh` | Sim | Renova o token |
+| `POST` | `/api/v1/logout` | Sim | Invalida o token |
 
 ---
 
